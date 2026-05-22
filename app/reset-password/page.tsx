@@ -6,48 +6,44 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 function ResetPasswordContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get('token') || '';
+  const router = useRouter();
+  const email = searchParams.get('email') || '';
+  const preCode = searchParams.get('code') || '';
 
+  const [code, setCode] = useState(preCode);
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
+    if (password !== confirm) {
       setError('Las contraseñas no coinciden');
       return;
     }
-
-    if (!token) {
-      setError('Token de restablecimiento no encontrado. Solicita un nuevo enlace.');
+    if (password.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
 
     setLoading(true);
-
+    setError('');
     try {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ email, code, password }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error || 'Error al restablecer la contraseña');
+        setError(data.error || 'Error al restablecer');
         return;
       }
-
       setSuccess(true);
-      setTimeout(() => router.push('/login'), 3000);
+      setTimeout(() => router.push('/login'), 2500);
     } catch {
       setError('Error de conexión. Intenta de nuevo.');
     } finally {
@@ -55,108 +51,109 @@ function ResetPasswordContent() {
     }
   }
 
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+          className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden w-full max-w-sm text-center p-10"
+        >
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">¡Contraseña actualizada!</h2>
+          <p className="text-sm text-gray-500">Redirigiendo al login...</p>
+          <div className="mt-4 h-1 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div initial={{ width: 0 }} animate={{ width: '100%' }} transition={{ duration: 2.5 }}
+              className="h-full bg-green-500 rounded-full" />
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="w-full max-w-md"
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+        className="w-full max-w-sm"
       >
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className={`h-1 ${success ? 'bg-green-500' : 'bg-blue-600'}`} />
-
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="h-1 bg-blue-600" />
           <div className="px-8 py-8">
-            {success ? (
-              <div className="text-center">
-                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+            <div className="text-center mb-7">
+              <h1 className="text-xl font-bold text-[#1E3A5F]">Nueva contraseña</h1>
+              {email && <p className="text-xs text-gray-500 mt-1">{email}</p>}
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!preCode && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Código de verificación</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    required
+                    value={code}
+                    onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+                    placeholder="123456"
+                    className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-xl font-bold tracking-widest"
+                  />
                 </div>
-                <h2 className="text-xl font-semibold text-blue-900 mb-2">Contraseña actualizada</h2>
-                <p className="text-sm text-gray-500 mb-4">
-                  Tu contraseña fue restablecida exitosamente. Serás redirigido al inicio de sesión en unos segundos.
-                </p>
-                <Link href="/login" className="text-sm text-blue-600 hover:underline font-medium">
-                  Ir al inicio de sesión
-                </Link>
+              )}
+
+              {preCode && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-center">
+                  <p className="text-xs text-blue-600">Código: <strong className="font-mono text-lg">{preCode}</strong></p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Mínimo 8 caracteres"
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
-            ) : (
-              <>
-                <div className="flex flex-col items-center mb-8">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-3">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <h1 className="text-xl font-semibold text-blue-900">Nueva contraseña</h1>
-                  <p className="mt-1 text-sm text-gray-400 text-center">
-                    Ingresa tu nueva contraseña.
-                  </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
+                <input
+                  type="password"
+                  required
+                  value={confirm}
+                  onChange={e => setConfirm(e.target.value)}
+                  placeholder="Repite la contraseña"
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              {error && (
+                <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  {error}
                 </div>
+              )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                      Nueva contraseña
-                    </label>
-                    <input
-                      id="password"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      minLength={8}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      placeholder="Mínimo 8 caracteres"
-                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-300"
-                    />
-                  </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2.5 rounded-xl transition-colors text-sm"
+              >
+                {loading ? 'Guardando...' : 'Guardar nueva contraseña'}
+              </button>
+            </form>
 
-                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                      Confirmar contraseña
-                    </label>
-                    <input
-                      id="confirmPassword"
-                      type="password"
-                      autoComplete="new-password"
-                      required
-                      minLength={8}
-                      value={confirmPassword}
-                      onChange={e => setConfirmPassword(e.target.value)}
-                      placeholder="Repite tu contraseña"
-                      className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-300"
-                    />
-                  </div>
-
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2"
-                    >
-                      {error}
-                    </motion.div>
-                  )}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-medium py-2.5 rounded-lg transition-colors text-sm"
-                  >
-                    {loading ? 'Actualizando...' : 'Actualizar contraseña'}
-                  </button>
-
-                  <div className="text-center">
-                    <Link href="/login" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">
-                      Volver al inicio de sesión
-                    </Link>
-                  </div>
-                </form>
-              </>
-            )}
+            <div className="mt-5 text-center">
+              <Link href="/forgot-password" className="text-sm text-gray-400 hover:text-gray-600">
+                ← Pedir nuevo código
+              </Link>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -166,11 +163,7 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Cargando...</div>
-      </div>
-    }>
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><p className="text-gray-400 text-sm">Cargando...</p></div>}>
       <ResetPasswordContent />
     </Suspense>
   );

@@ -2,19 +2,15 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Client } from 'pg';
 
 let _client: SupabaseClient | null = null;
-let _checked = false;
 
 export function getSupabaseClient(): SupabaseClient | null {
   if (_client) return _client;
-  if (_checked) return null;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  _checked = true;
-
   if (!url || !key || url.startsWith('your_') || key.startsWith('your_')) {
-    console.warn('[supabase] No configurado → retornando null (build-safe)');
+    // No cachear el null — puede que las vars lleguen después
     return null;
   }
 

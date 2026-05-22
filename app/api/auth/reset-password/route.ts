@@ -1,23 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { ResetPasswordSchema } from '@/lib/schemas';
-import { resetPassword, NotFoundError, ValidationError } from '@/lib/dataService';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const parse = ResetPasswordSchema.safeParse(body);
-  if (!parse.success) return NextResponse.json({ error: parse.error.issues[0].message }, { status: 400 });
-
-  const { token, password } = parse.data;
-  const hash = await bcrypt.hash(password, 10);
-
   try {
-    await resetPassword(token, hash);
-    return NextResponse.json({ message: 'Contraseña actualizada exitosamente' });
-  } catch (err) {
-    if (err instanceof NotFoundError || err instanceof ValidationError) {
-      return NextResponse.json({ error: err.message }, { status: 400 });
+    const { email, code, password } = await req.json();
+
+    if (!email || !code || !password) {
+      return NextResponse.json({ error: 'Faltan datos requeridos' }, { status: 400 });
     }
+    if (password.length < 8) {
+      return NextResponse.json({ error: 'La contraseña debe tener al menos 8 caracteres' }, { status: 400 });
+    }
+
+    // Buscar usuario
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (!user) return NextResponse.json({ error: 'Correo no encontrado' }, { status: 400 });
+
+    // Buscar token válido
+    const { data: tokenData } = await supabaseAdmin
+      .from('password_reset_tokens')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('token', String(code).trim())
+      .is('used_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (!tokenData) {
+      return NextResponse.json({ error: 'Código incorrecto' }, { status: 400 });
+    }
+    if (new Date(tokenData.expires_at) < new Date()) {
+      return NextResponse.json({ error: 'El código ha expirado. Solicita uno nuevo.' }, { status: 400 });
+    }
+
+    // Actualizar contraseña
+    const hash = await bcrypt.hash(password, 10);
+    await supabaseAdmin
+      .from('users')
+      .update({ password_hash: hash, login_attempts: 0, locked_until: null })
+      .eq('id', user.id);
+
+    await supabaseAdmin
+      .from('password_reset_tokens')
+      .update({ used_at: new Date().toISOString() })
+      .eq('id', tokenData.id);
+
+    return NextResponse.json({ message: 'Contraseña actualizada exitosamente' });
+
+  } catch (err) {
+    console.error('[Reset password error]', err);
     return NextResponse.json({ error: 'Error al restablecer la contraseña' }, { status: 500 });
   }
 }

@@ -51,8 +51,8 @@ export default function RegisterPage() {
         return;
       }
 
-      // Solo mostrar el código en pantalla si el correo NO se pudo enviar
-      const codeParam = (!data.emailSent && data.code) ? `&code=${data.code}` : '';
+      // Siempre pasar el código para mostrarlo en pantalla
+      const codeParam = data.code ? `&code=${data.code}` : '';
       router.push(`/verify?email=${encodeURIComponent(email)}${codeParam}`);
       setSuccess(true);
     } catch {

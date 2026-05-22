@@ -63,22 +63,27 @@ export async function sendVerificationEmail(to: string, activationToken: string,
   });
 }
 
-export async function sendPasswordResetEmail(to: string, resetToken: string, institutionName: string): Promise<void> {
+export async function sendPasswordResetEmail(to: string, code: string, institutionName: string): Promise<void> {
   const resend = getResend();
-  const resetUrl = `${getAppUrl()}/reset-password?token=${resetToken}`;
 
   await resend.emails.send({
     from: getFromEmail(),
     to,
-    subject: `Restablecer contraseña - ${institutionName} EvalDoc`,
+    subject: `${code} es tu código para restablecer contraseña — EvalDoc`,
     html: `
-      <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #1E3A5F; font-size: 24px;">Restablecer contraseña</h1>
-        <p style="color: #6B7280;">Haz clic en el botón para crear una nueva contraseña. Este enlace expira en 15 minutos.</p>
-        <a href="${resetUrl}" style="display: inline-block; background: #2563EB; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin: 20px 0;">
-          Restablecer contraseña
-        </a>
-        <p style="color: #6B7280; font-size: 14px;">Si no solicitaste este cambio, ignora este correo.</p>
+      <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #E5E7EB;">
+        <div style="background: #1E3A5F; padding: 28px 32px;">
+          <h1 style="color: white; font-size: 22px; margin: 0; font-weight: 800;">EvalDoc</h1>
+          <p style="color: #93C5FD; font-size: 13px; margin: 4px 0 0;">Restablecer contraseña</p>
+        </div>
+        <div style="padding: 32px;">
+          <p style="color: #374151; font-size: 15px; margin: 0 0 8px;">Hola,</p>
+          <p style="color: #6B7280; font-size: 14px; margin: 0 0 28px;">Usa este código para restablecer tu contraseña en <strong>${institutionName}</strong>. Expira en <strong>15 minutos</strong>.</p>
+          <div style="background: #F3F4F6; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 28px;">
+            <div style="font-size: 42px; font-weight: 900; letter-spacing: 12px; color: #1E3A5F; font-family: monospace;">${code}</div>
+          </div>
+          <p style="color: #9CA3AF; font-size: 12px; margin: 0;">Si no solicitaste este cambio, ignora este correo.</p>
+        </div>
       </div>
     `,
   });

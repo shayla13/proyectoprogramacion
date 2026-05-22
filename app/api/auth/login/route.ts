@@ -4,9 +4,11 @@ import { LoginSchema } from '@/lib/schemas';
 import { signToken } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { randomBytes } from 'crypto';
+import { ensureDatabase } from '@/lib/dbInit';
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureDatabase();
     const body = await req.json();
     const parse = LoginSchema.safeParse(body);
     if (!parse.success) return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });

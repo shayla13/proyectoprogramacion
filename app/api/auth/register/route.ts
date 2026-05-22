@@ -4,6 +4,7 @@ import { RegisterSchema } from '@/lib/schemas';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendVerificationCode } from '@/lib/emailService';
 import { getSystemConfig } from '@/lib/dataService';
+import { ensureDatabase } from '@/lib/dbInit';
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -11,6 +12,7 @@ function generateCode(): string {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureDatabase();
     const body = await req.json();
     const parse = RegisterSchema.safeParse(body);
     if (!parse.success) {

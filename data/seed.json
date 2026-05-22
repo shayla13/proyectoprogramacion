@@ -1,0 +1,14 @@
+{
+  "users": [{
+    "email": "admin@evaldoc.edu.co",
+    "password_hash": "$2b$10$E5Y1DEDNIYWfOQykYCEs2estVv78kdkKdl2Gnfh0q9j9EZDXnhcYW",
+    "name": "Administrador",
+    "role": "admin",
+    "is_active": true
+  }],
+  "system_config": {
+    "institution_name": "Institución Universitaria",
+    "allowed_domain": "evaldoc.edu.co",
+    "min_evaluations_to_publish": 3
+  }
+}

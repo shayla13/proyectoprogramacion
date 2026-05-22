@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes)"
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --yes)",
+      "Bash(npm install *)",
+      "Bash(cd \"C:\\\\Users\\\\ESTUDIANTE\\\\Desktop\\\\proyecto\" && mkdir -p doc data supabase/migrations lib app/api/system/bootstrap app/api/system/diagnose app/api/system/mode app/api/auth/login app/api/auth/logout app/api/auth/register app/api/auth/verify app/api/auth/me app/api/auth/forgot-password app/api/auth/reset-password app/api/auth/change-password app/api/auth/resend-verification app/login app/register app/verify app/forgot-password app/reset-password 2>&1)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\ESTUDIANTE\\\\Desktop\\\\proyecto\\\\app\" -Recurse | Where-Object {!$_.PSIsContainer} | Select-Object FullName)",
+      "Bash(ls /mnt/c/Users/ESTUDIANTE/Desktop/proyecto/supabase/migrations/ 2>/dev/null || echo \"no files\")",
+      "Bash(cat > *)",
+      "Bash(xargs sed -i 's/params: Record<string, string>/params: Promise<Record<string, string>>/g')",
+      "Bash(sed -i 's/const { id } = ctx\\\\.params;/const { id } = await ctx.params;/g' C:/Users/ESTUDIANTE/Desktop/proyecto/__TRACKED_VAR__)",
+      "Bash(sed -i 's/const { professorId } = ctx\\\\.params;/const { professorId } = await ctx.params;/g' C:/Users/ESTUDIANTE/Desktop/proyecto/__TRACKED_VAR__)",
+      "Bash(sed -i 's/const params = ctx\\\\.params;/const params = await ctx.params;/g' C:/Users/ESTUDIANTE/Desktop/proyecto/__TRACKED_VAR__)"
     ]
   }
 }

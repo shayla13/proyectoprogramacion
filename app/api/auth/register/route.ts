@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { RegisterSchema } from '@/lib/schemas';
-import { getSystemMode, ConflictError } from '@/lib/dataService';
+import { ConflictError } from '@/lib/dataService';
 import { supabaseAdmin } from '@/lib/supabase';
 import { sendVerificationCode } from '@/lib/emailService';
 import { getSystemConfig } from '@/lib/dataService';
@@ -11,13 +11,6 @@ function generateCode(): string {
 }
 
 export async function POST(req: NextRequest) {
-  const mode = await getSystemMode();
-  if (mode === 'seed') {
-    return NextResponse.json({
-      error: 'La base de datos no está configurada aún. Ve a /setup-database para inicializarla.',
-    }, { status: 503 });
-  }
-
   const body = await req.json();
   const parse = RegisterSchema.safeParse(body);
   if (!parse.success) {
